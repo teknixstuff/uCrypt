@@ -1,0 +1,63 @@
+<script>
+function generate() {
+  var key = new uCrypt.KeyPair();
+  document.getElementById("key-priv").value = key;
+  document.getElementById("key-pub").value = key.public;
+}
+
+function encrypt() {
+  var key = new uCrypt.PublicKey(document.getElementById("key-pub").value);
+  var ciphertext = key.encrypt(uCrypt.util.str2bytes(document.getElementById("decrypted").value));
+  document.getElementById("encrypted").value = uCrypt.util.bytes2hex(ciphertext);
+}
+
+function decrypt() {
+  var key = new uCrypt.KeyPair(document.getElementById("key-priv").value);
+  var cleartext = key.decrypt(uCrypt.util.hex2bytes(document.getElementById("encrypted").value));
+  document.getElementById("decrypted").value = uCrypt.util.bytes2str(cleartext);
+}
+
+function sign() {
+  var key = new uCrypt.KeyPair(document.getElementById("key-priv").value);
+  var signature = key.sign(uCrypt.util.str2bytes(document.getElementById("decrypted").value));
+  document.getElementById("encrypted").value = uCrypt.util.bytes2hex(signature);
+}
+
+function verify() {
+  var key = new uCrypt.PublicKey(document.getElementById("key-pub").value);
+  var signature = uCrypt.util.hex2bytes(document.getElementById("encrypted").value);
+  var data = uCrypt.util.str2bytes(document.getElementById("decrypted").value);
+  var valid = key.verify(signature, data);
+  if (valid) {
+    document.getElementById("sign-valid").style.display = '';
+    document.getElementById("sign-invalid").style.display = 'none';
+  } else {
+    document.getElementById("sign-valid").style.display = 'none';
+    document.getElementById("sign-invalid").style.display = '';
+  }
+}
+</script>
+<style>
+#key-priv, #key-pub, #encrypted, #decrypted {
+  width: 512px;
+  font-family: monospace;
+}
+#encrypted, #decrypted {
+  height: 56px;
+}
+</style>
+<script src="uCrypt.min.js"></script>
+<div>
+  <button onclick="generate()">Generate</button>
+  <button onclick="encrypt()">Encrypt</button>
+  <button onclick="decrypt()">Decrypt</button>
+  <button onclick="sign()">Sign</button>
+  <button onclick="verify()">Verify</button>
+  <span id="sign-valid" style="display: none;">Valid</span>
+  <span id="sign-invalid" style="display: none;">Invalid</span>
+</div>
+<br>
+<div><input id="key-priv" type="text"></div>
+<div><input id="key-pub" type="text"></div>
+<pre><textarea id="decrypted"></textarea></pre>
+<pre><textarea id="encrypted"></textarea></pre>
