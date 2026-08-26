@@ -1,7 +1,14 @@
 (function() {
-    var BigInteger = (function() {
-        "use strict";
+    "use strict";
 
+    var prototype = "prototype";
+    var length = "length";
+    var onreadystatechange = "onreadystatechange";
+    var mathFloor = Math['floor'];
+    var mathPow = Math['pow'];
+    var mathLog = Math['log'];
+
+    var BigInteger = (function() {
         if (typeof BigInt !== 'undefined') {
             var BigInteger = function(val) { return BigInt(val); };
             BigInteger.add = function(a, b) { return a + b; };
@@ -66,7 +73,7 @@
             s *= 2;
         }
         var SPLIT = s + 1;
-        var BASELOG2 = Math.ceil(Math.log(BASE) / Math.log(2));
+        var BASELOG2 = Math['ceil'](mathLog(BASE) / mathLog(2));
 
         var fma = function(a, b, product) {
             var at = SPLIT * a;
@@ -161,7 +168,7 @@
                 return fromNumber(Number(value));
             }
             throw new RangeError();
-        }
+        };
 
         var createBigInteger = function(sign, magnitude, length) {
             return new BigInteger(INTERNAL, sign, magnitude, length);
@@ -174,11 +181,11 @@
                 throw new RangeError();
             }
             var i = 0;
-            while (a >= Math.pow(BASE, 2)) {
+            while (a >= mathPow(BASE, 2)) {
                 a /= BASE;
                 i += 1;
             }
-            var hi = Math.floor(a / BASE);
+            var hi = mathFloor(a / BASE);
             var lo = a - hi * BASE;
             var digits = createArray(i + 2);
             digits[i + 1] = hi;
@@ -187,7 +194,7 @@
         };
 
         var fromNumber = function(n) {
-            if (Math.floor(n) !== n) {
+            if (mathFloor(n) !== n) {
                 throw new RangeError("Cannot convert " + n + " to BigInteger");
             }
             if (n < BASE && 0 - n < BASE) {
@@ -199,8 +206,8 @@
         };
 
         var fromString = function(s) {
-            var length = s.length;
-            if (length === 0) {
+            var numLength = s[length];
+            if (numLength === 0) {
                 throw new RangeError();
             }
             var sign = 0;
@@ -214,7 +221,7 @@
                 sign = 1;
             }
             var radix = 10;
-            if (from === 0 && length >= 2 && s.charCodeAt(0) === "0".charCodeAt(0)) {
+            if (from === 0 && numLength >= 2 && s.charCodeAt(0) === "0".charCodeAt(0)) {
                 if (s.charCodeAt(1) === "b".charCodeAt(0)) {
                     radix = 2;
                     from = 2;
@@ -226,8 +233,8 @@
                     from = 2;
                 }
             }
-            length -= from;
-            if (length === 0) {
+            numLength -= from;
+            if (numLength === 0) {
                 throw new RangeError();
             }
 
@@ -239,9 +246,9 @@
                 groupRadix *= radix;
             }
 
-            var size = Math.floor((length - 1) / groupLength) + 1;
+            var size = mathFloor((numLength - 1) / groupLength) + 1;
             var magnitude = createArray(size);
-            var start = from + 1 + (length - 1 - (size - 1) * groupLength) - groupLength;
+            var start = from + 1 + (numLength - 1 - (size - 1) * groupLength) - groupLength;
 
             var j = -1;
             while (++j < size) {
@@ -265,7 +272,7 @@
             return createBigInteger(size === 0 ? 0 : sign, magnitude, size);
         };
 
-        // Math.pow(2, n) is slow in Chrome 93
+        // mathPow(2, n) is slow in Chrome 93
         function exp(x, n) {
             var a = 1;
             while (n !== 0) {
@@ -505,7 +512,7 @@
             if (shift < 0) {
                 shift = 0;
             }
-            var quotient = undefined;
+            var quotient = void 0;
             var quotientLength = 0;
 
             // to optimize divisions by a power of BASE
@@ -651,25 +658,25 @@
                 return BigInteger(1);
             }
             if (a.length === 1 && (a.magnitude[0] === 2 || a.magnitude[0] === 16)) {
-                var bits = Math.floor(Math.log(BASE) / Math.log(2) + 0.5);
-                var abits = Math.floor(Math.log(a.magnitude[0]) / Math.log(2) + 0.5);
+                var bits = mathFloor(mathLog(BASE) / mathLog(2) + 0.5);
+                var abits = mathFloor(mathLog(a.magnitude[0]) / mathLog(2) + 0.5);
                 var nn = abits * n;
-                var q = Math.floor(nn / bits);
+                var q = mathFloor(nn / bits);
                 var r = nn - q * bits;
                 var array = createArray(q + 1);
-                array[q] = Math.pow(2, r);
+                array[q] = mathPow(2, r);
                 return createBigInteger(a.sign === 0 || n % 2 === 0 ? 0 : 1, array, q + 1);
             }
             var x = a;
             while (n % 2 === 0) {
-                n = Math.floor(n / 2);
+                n = mathFloor(n / 2);
                 x = BigInteger.multiply(x, x);
             }
             var accumulator = x;
             n -= 1;
             if (n >= 2) {
                 while (n >= 2) {
-                    var t = Math.floor(n / 2);
+                    var t = mathFloor(n / 2);
                     if (t * 2 !== n) {
                         accumulator = BigInteger.multiply(accumulator, x);
                     }
@@ -681,11 +688,11 @@
             return accumulator;
         };
 
-        BigInteger.prototype.toString = function(radix) {
-            if (radix == undefined) {
+        BigInteger[prototype].toString = function(radix) {
+            if (radix == void 0) {
                 radix = 10;
             }
-            if (radix !== 10 && (radix < 2 || radix > 36 || radix !== Math.floor(radix))) {
+            if (radix !== 10 && (radix < 2 || radix > 36 || radix !== mathFloor(radix))) {
                 throw new RangeError("radix argument must be an integer between 2 and 36");
             }
 
@@ -693,7 +700,7 @@
                 if (this.sign === 1) {
                     return '-' + BigInteger.unaryMinus(this).toString(radix);
                 }
-                var s = Math.floor(this.length * Math.log(BASE) / Math.log(radix) / 2 + 0.5 - 1);
+                var s = mathFloor(this.length * mathLog(BASE) / mathLog(radix) / 2 + 0.5 - 1);
                 var split = BigInteger.exponentiate(BigInteger(radix), BigInteger(s));
                 var q = BigInteger.divide(this, split);
                 var r = BigInteger.subtract(this, BigInteger.multiply(q, split));
@@ -723,7 +730,7 @@
             if (groupRadix * radix <= BASE) {
                 throw new RangeError();
             }
-            var size = remainderLength + Math.floor((remainderLength - 1) / groupLength) + 1;
+            var size = remainderLength + mathFloor((remainderLength - 1) / groupLength) + 1;
             var remainder = createArray(size);
             var n = -1;
             while (++n < remainderLength) {
@@ -759,7 +766,7 @@
             if (x.length === 0) {
                 return x;
             }
-            var shift = Math.floor(n / BASELOG2);
+            var shift = mathFloor(n / BASELOG2);
             var length = x.length - shift;
             if (length <= 0) {
                 if (x.sign === 1) {
@@ -775,10 +782,10 @@
             }
             n -= shift * BASELOG2;
             var s = exp(2, n);
-            var s1 = Math.floor(BASE / s);
+            var s1 = mathFloor(BASE / s);
             var pr = 0;
             for (var i = length - 1; i >= 0; i -= 1) {
-                var q = Math.floor(digits[i] / s);
+                var q = mathFloor(digits[i] / s);
                 var r = digits[i] - q * s;
                 digits[i] = q + pr * s1;
                 pr = r;
@@ -821,7 +828,7 @@
         };
 
         var bitwiseArrayOp = function(a, b, opFn) {
-            var maxLen = Math.max(a.length, b.length);
+            var maxLen = Math['max'](a.length, b.length);
             var result = createArray(maxLen);
             var i = -1;
 
@@ -829,8 +836,8 @@
                 var wordA = i < a.length ? a.magnitude[i] : 0;
                 var wordB = i < b.length ? b.magnitude[i] : 0;
                 var resultA = opFn(wordA & 0x3FFFFFFF, wordB & 0x3FFFFFFF);
-                var resultB = opFn(Math.floor(wordA / Math.pow(2, 30)), Math.floor(wordB / Math.pow(2, 30)))
-                result[i] = resultA + (resultB * Math.pow(2, 30));
+                var resultB = opFn(mathFloor(wordA / mathPow(2, 30)), mathFloor(wordB / mathPow(2, 30)))
+                result[i] = resultA + (resultB * mathPow(2, 30));
             }
 
             var resultLength = maxLen;
@@ -858,7 +865,7 @@
                 return x ^ y;
             });
         };
-        BigInteger.prototype.valueOf = BigInteger.prototype.toNumber;
+        BigInteger[prototype].valueOf = BigInteger[prototype].toNumber;
 
         return BigInteger;
 
@@ -869,18 +876,17 @@
             return (value >>> amount) | (value << (32 - amount));
         };
 
-        var mathPow = Math.pow;
+        var mathPow = Math['pow'];
         var maxWord = mathPow(2, 32);
-        var lengthProperty = 'length'
         var i, j;
         var result = [];
 
         var words = [];
-        var asciiBitLength = inbytes[lengthProperty] * 8;
+        var asciiBitLength = inbytes[length] * 8;
 
         var hash = sha256.h = sha256.h || [];
         var k = sha256.k = sha256.k || [];
-        var primeCounter = k[lengthProperty];
+        var primeCounter = k[length];
 
         var isComposite = {};
         for (var candidate = 2; primeCounter < 64; candidate++) {
@@ -893,21 +899,21 @@
             }
         }
 
-        var extra = ((55 - (inbytes[lengthProperty] % 64) + 64) % 64 + 1);
-        for (i = 0; i < inbytes[lengthProperty] + extra; i++) {
-            if (i < inbytes[lengthProperty]) {
+        var extra = ((55 - (inbytes[length] % 64) + 64) % 64 + 1);
+        for (i = 0; i < inbytes[length] + extra; i++) {
+            if (i < inbytes[length]) {
                 j = inbytes[i];
-            } else if (i > inbytes[lengthProperty]) {
+            } else if (i > inbytes[length]) {
                 j = 0;
             } else {
                 j = 0x80;
             }
             words[i >> 2] |= j << ((3 - i) % 4) * 8;
         }
-        words[words[lengthProperty]] = ((asciiBitLength / maxWord) | 0);
-        words[words[lengthProperty]] = (asciiBitLength)
+        words[words[length]] = ((asciiBitLength / maxWord) | 0);
+        words[words[length]] = (asciiBitLength)
 
-        for (j = 0; j < words[lengthProperty];) {
+        for (j = 0; j < words[length];) {
             var w = words.slice(j, j += 16);
             var oldHash = hash;
             hash = hash.slice(0, 8);
@@ -944,24 +950,65 @@
         for (i = 0; i < 8; i++) {
             for (j = 3; j + 1; j--) {
                 var b = (hash[i] >> (j * 8)) & 255;
-                result.push(b);
+                result[result[length]] = b;
             }
         }
         return result;
     };
 
+    var randState = [];
+    var randBytes = function(count) {
+        if (typeof process === 'object') return Array['from'](require('crypto')['randomBytes'](count));
+        if (window.crypto) return Array[prototype]['slice'].call(window.crypto['getRandomValues'](new Uint8Array(count)));
+        var bkey;
+        var out = [];
+        var randLen = randState[length];
+        for (var i = 0; i <= count; i++) {
+            if (i % 32 == 0 || i == count) {
+                var block = ((i / 32) | 0) + (i == count);
+                randState[randLen + 0] = (block >> 0) & 0xFF;
+                randState[randLen + 1] = (block >> 8) & 0xFF;
+                randState[randLen + 2] = (block >> 16) & 0xFF;
+                randState[randLen + 3] = (block >> 24) & 0xFF;
+                bkey = sha256(randState);
+            }
+            if (i != count) out[out[length]] = bkey[i % 32];
+        }
+        randState = bkey;
+        return out;
+    };
+    if (typeof process !== 'object' && !window.crypto) {
+        var mouseSeed = function(e){
+            e = e || window['event'];
+            var data = [e.clientX, e.clientY, e.screenX, e.screenY, new Date()['getTime']()];
+            for (var i = 0; i < data[length]; i++) {
+                randState[randState[length]] = (data[i] >> 0) & 0xFF;
+                randState[randState[length]] = (data[i] >> 8) & 0xFF;
+                randState[randState[length]] = (data[i] >> 16) & 0xFF;
+                randState[randState[length]] = (data[i] >> 24) & 0xFF;
+            }
+            if (randState[length] > 512) randState = sha256(randState);
+        };
+        if (document.attachEvent) {
+            document.attachEvent('onmousemove', mouseSeed);
+        } else {
+            document.addEventListener('mousemove', mouseSeed);
+        }
+    }
+
     var str2bytes = function(str) {
         var bytes = [];
-        for (var i = 0; i < str.length; i++) {
+        for (var i = 0; i < str[length]; i++) {
             var code = str.charCodeAt(i);
-            bytes.push(code & 255, code >> 8);
+            bytes[bytes[length]] = code & 255
+            bytes[bytes[length]] = code >> 8;
         }
         return bytes;
     }
 
     var bytes2str = function(bytes) {
         var str = "";
-        for (var i = 0; i < bytes.length; i += 2) {
+        for (var i = 0; i < bytes[length]; i += 2) {
             str += String.fromCharCode(bytes[i] | (bytes[i + 1] << 8));
         }
         return str;
@@ -970,19 +1017,19 @@
     var hex2bytes = function(str) {
         var bytes = [];
         var c = 0;
-        if (str.length % 2 != 0) {
-            bytes.push(parseInt(str.substr(0, 1), 16));
+        if (str[length] % 2 != 0) {
+            bytes[bytes[length]] = parseInt(str.substr(0, 1), 16);
             c = 1;
         }
-        for (; c < str.length; c += 2) {
-            bytes.push(parseInt(str.substr(c, 2), 16));
+        for (; c < str[length]; c += 2) {
+            bytes[bytes[length]] = parseInt(str.substr(c, 2), 16);
         }
         return bytes;
     }
 
     var bytes2hex = function(bytes) {
         var str = "";
-        for (var i = 0; i < bytes.length; i++) {
+        for (var i = 0; i < bytes[length]; i++) {
             str += "0123456789ABCDEF".charAt(bytes[i] >> 4);
             str += "0123456789ABCDEF".charAt(bytes[i] & 0xF);
         }
@@ -992,28 +1039,19 @@
     var encrypt = function(data, key, nonce, authLength) {
         var ikey = [];
         var out = [];
-        var nonceLength;
         if (typeof nonce == "number") {
-            nonceLength = nonce;
-        } else {
-            nonceLength = nonce.length;
+            nonce = randBytes(nonce);
         }
-        for (var i = 0; i < nonceLength; i++) {
-            var val;
-            if (typeof nonce == "number") {
-                val = Math.floor(Math.random() * 256);
-            } else {
-                val = nonce[i];
-            }
-            ikey.push(val);
-            out.push(val);
+        for (var i = 0; i < nonce[length]; i++) {
+            ikey[ikey[length]] = nonce[i];
+            out[out[length]] = nonce[i];
         }
-        for (var i = 0; i < key.length; i++) {
-            ikey.push(key[i]);
+        for (var i = 0; i < key[length]; i++) {
+            ikey[ikey[length]] = key[i];
         }
-        var ikeyc = ikey.length;
+        var ikeyc = ikey[length];
         var bkey = [];
-        for (var i = 0; i < data.length; i++) {
+        for (var i = 0; i < data[length]; i++) {
             if (i % 32 == 0) {
                 var block = ((i / 32) | 0) + 1;
                 ikey[ikeyc + 0] = (block >> 0) & 0xFF;
@@ -1022,15 +1060,15 @@
                 ikey[ikeyc + 3] = (block >> 24) & 0xFF;
                 bkey = sha256(ikey);
             }
-            out.push(data[i] ^ bkey[i % 32]);
+            out[out[length]] = data[i] ^ bkey[i % 32];
         }
         ikey[ikeyc + 0] = 0;
         ikey[ikeyc + 1] = 0;
         ikey[ikeyc + 2] = 0;
         ikey[ikeyc + 3] = 0;
-        var auth = sha256(sha256(ikey.concat(out.slice(nonceLength))));
+        var auth = sha256(sha256(ikey.concat(out.slice(nonce[length]))));
         for (var i = 0; i < authLength; i++) {
-            out.push(auth[i]);
+            out[out[length]] = auth[i];
         }
         return out;
     }
@@ -1039,24 +1077,24 @@
         var ikey = [];
         var out = [];
         for (var i = 0; i < nonceLength; i++) {
-            ikey.push(data[i]);
+            ikey[ikey[length]] = data[i];
         }
-        for (var i = 0; i < key.length; i++) {
-            ikey.push(key[i]);
+        for (var i = 0; i < key[length]; i++) {
+            ikey[ikey[length]] = key[i];
         }
-        var ikeyc = ikey.length;
+        var ikeyc = ikey[length];
         var bkey = [];
         ikey[ikeyc + 0] = 0;
         ikey[ikeyc + 1] = 0;
         ikey[ikeyc + 2] = 0;
         ikey[ikeyc + 3] = 0;
-        var auth = sha256(sha256(ikey.concat(data.slice(nonceLength, data.length - authLength))));
+        var auth = sha256(sha256(ikey.concat(data.slice(nonceLength, data[length] - authLength))));
         var a = 0;
         for (var i = 0; i < authLength; i++) {
-            a |= data[data.length - authLength + i] ^ auth[i];
+            a |= data[data[length] - authLength + i] ^ auth[i];
         }
         if (a) return null;
-        for (var i = 0; i < data.length - (nonceLength + authLength); i++) {
+        for (var i = 0; i < data[length] - (nonceLength + authLength); i++) {
             if (i % 32 == 0) {
                 var block = ((i / 32) | 0) + 1;
                 ikey[ikeyc + 0] = (block >> 0) & 0xFF;
@@ -1065,17 +1103,9 @@
                 ikey[ikeyc + 3] = (block >> 24) & 0xFF;
                 bkey = sha256(ikey);
             }
-            out.push(data[i + nonceLength] ^ bkey[i % 32]);
+            out[out[length]] = data[i + nonceLength] ^ bkey[i % 32];
         }
         return out;
-    }
-
-    var randBytes = function(count) {
-        var bytes = [];
-        for (var i = 0; i < count; i++) {
-            bytes.push(Math.floor(Math.random() * 256));
-        }
-        return bytes;
     }
 
     var P = BigInteger.subtract(BigInteger.exponentiate(BigInteger(2), BigInteger(255)), BigInteger(19));
@@ -1125,7 +1155,7 @@
         var bytes = [];
         var n = BigInteger(num);
         for (var i = 0; i < 32; i++) {
-            bytes.push(Number(BigInteger.bitwiseAnd(n, BigInteger(0xFF))));
+            bytes[bytes[length]] = Number(BigInteger.bitwiseAnd(n, BigInteger(0xFF)));
             n = BigInteger.signedRightShift(n, BigInteger(8));
         }
         return bytes;
@@ -1140,28 +1170,29 @@
     }
 
     var isIE = function() {
-        var myNav = navigator.userAgent.toLowerCase();
+        var myNav = navigator['userAgent']['toLowerCase']();
         return (myNav.indexOf('msie') != -1) ? parseInt(myNav.split('msie')[1]) : false;
     }
 
     var nextTick = function(callback) {
         if (!isIE() || isIE() > 8) return callback();
+        var docElem = document['documentElement'];
         var script = document.createElement("script");
-        script.onreadystatechange = function() {
-            script.onreadystatechange = null;
-            document.documentElement.removeChild(script);
+        script[onreadystatechange] = function() {
+            script[onreadystatechange] = null;
+            docElem.removeChild(script);
             script = null;
             callback();
         };
-        document.documentElement.appendChild(script);
+        docElem.appendChild(script);
     }
 
     var montgomeryLadder = function(scalarBytes, pointBytes, callback) {
         var mustFixIE = isIE() && isIE() < 9;
         if (mustFixIE && !callback) {
-            var out = window.showModalDialog("ladder_sync_ie.html", {scalarBytes: scalarBytes, pointBytes: pointBytes}, "dialogWidth:1px; dialogHeight:1px; dialogTop:99999px; dialogLeft:99999px;");
-            var outFixed = new Array(out.length);
-            for (var i = 0; i < out.length; i++) {
+            var out = showModalDialog("ladder_sync_ie.html", {"scalarBytes": scalarBytes, "pointBytes": pointBytes}, "dialogWidth:1px; dialogHeight:1px; dialogTop:99999px; dialogLeft:99999px;");
+            var outFixed = new Array(out[length]);
+            for (var i = 0; i < out[length]; i++) {
                 outFixed[i] = out[i];
             }
             return outFixed;
@@ -1180,7 +1211,7 @@
 
         var loopStep = function () {
             var iterationsPerTick = mustFixIE ? 32 : Infinity;
-            var end = Math.max(t - iterationsPerTick, -1);
+            var end = Math['max'](t - iterationsPerTick, -1);
 
             while (t > end) {
                 var k_t = BigInteger.bitwiseAnd(BigInteger.signedRightShift(k, BigInteger(t)), BigInteger(1));
@@ -1252,7 +1283,7 @@
     var hashToScalar = function(dataBytes) {
         var digestBytes = sha256(dataBytes);
         var hashBigInt = BigInteger(0);
-        for (var i = 0; i < digestBytes.length; i++) {
+        for (var i = 0; i < digestBytes[length]; i++) {
             hashBigInt = BigInteger.add(BigInteger.leftShift(hashBigInt, BigInteger(8)), BigInteger(digestBytes[i]));
         }
         return BigInteger.remainder(hashBigInt, L);
@@ -1319,21 +1350,21 @@
         } else if (typeof value == "string") {
             value = hex2bytes(value);
         }
-        if (value.length != 32) {
+        if (value[length] != 32) {
             throw new TypeError("Invalid symmetric key");
         }
         this.value = value;
     }
 
-    SymmetricKey.prototype.encrypt = function(data) {
+    SymmetricKey[prototype]["encrypt"] = function(data) {
         return encrypt(data, this.value, 16, 16);
     }
 
-    SymmetricKey.prototype.decrypt = function(data) {
+    SymmetricKey[prototype]["decrypt"] = function(data) {
         return decrypt(data, this.value, 16, 16);
     }
 
-    SymmetricKey.prototype.toString = function() {
+    SymmetricKey[prototype]["toString"] = function() {
         return bytes2hex(this.value);
     }
 
@@ -1341,7 +1372,7 @@
         if (typeof value == "string") {
             value = hex2bytes(value);
         }
-        if (value.length != 32) {
+        if (value[length] != 32) {
             throw new TypeError("Invalid public key");
         }
         this.value = value;
@@ -1353,68 +1384,58 @@
         } else if (typeof value == "string") {
             value = hex2bytes(value);
         }
-        if (value.length != 32) {
+        if (value[length] != 32) {
             throw new TypeError("Invalid private key");
         }
         this.value = value;
-        this.public = new PublicKey(getPublicKey(this.value));
+        this['public'] = new PublicKey(getPublicKey(this.value));
     }
 
-    PublicKey.prototype.toString = function() {
+    PublicKey[prototype]["toString"] = function() {
         return bytes2hex(this.value);
     }
 
-    KeyPair.prototype.toString = function() {
+    KeyPair[prototype]["toString"] = function() {
         return bytes2hex(this.value);
     }
 
-    PublicKey.prototype.encrypt = function(data) {
+    PublicKey[prototype]["encrypt"] = function(data) {
         var tempKey = new KeyPair();
         var cryptKey = x25519(tempKey.value, this.value);
         var ciphertext = encrypt(data, cryptKey, 0, 16);
-        return [].concat(tempKey.public.value, ciphertext);
+        return [].concat(tempKey['public'].value, ciphertext);
     }
 
-    KeyPair.prototype.decrypt = function(data) {
+    KeyPair[prototype]["decrypt"] = function(data) {
         var cryptKey = x25519(this.value, data.slice(0, 32));
         return decrypt(data.slice(32), cryptKey, 0, 16);
     }
 
-    PublicKey.prototype.verify = function(signature, data) {
+    PublicKey[prototype]["verify"] = function(signature, data) {
         return verify(this.value, signature, data);
     }
 
-    KeyPair.prototype.sign = function(data) {
+    KeyPair[prototype]["sign"] = function(data) {
         return sign(this.value, data);
     }
 
-    KeyPair.prototype.exchange = function(pub) {
+    KeyPair[prototype]["exchange"] = function(pub) {
         return new SymmetricKey(x25519(this.value, pub.value));
     }
 
     var uCrypt = {
-        internal: {
-            generateKey: function() {
-                return randBytes(32);
-            },
-            getCombinedKey: x25519,
-            getPublicKey: getPublicKey,
-            sign: sign,
-            verify: verify,
-            encrypt: encrypt,
-            decrypt: decrypt,
-            hash: sha256,
-            montgomeryLadder: montgomeryLadder
+        "internal": {
+            "montgomeryLadder": montgomeryLadder
         },
-        util: {
-            bytes2str: bytes2str,
-            str2bytes: str2bytes,
-            bytes2hex: bytes2hex,
-            hex2bytes: hex2bytes
+        "util": {
+            "bytes2str": bytes2str,
+            "str2bytes": str2bytes,
+            "bytes2hex": bytes2hex,
+            "hex2bytes": hex2bytes
         },
-        SymmetricKey: SymmetricKey,
-        KeyPair: KeyPair,
-        PublicKey: PublicKey
+        "SymmetricKey": SymmetricKey,
+        "KeyPair": KeyPair,
+        "PublicKey": PublicKey
     };
 
 
